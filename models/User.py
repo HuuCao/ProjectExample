@@ -1,5 +1,3 @@
-import datetime
-
 from .base import db
 
 class User(db.Model):
@@ -9,3 +7,6 @@ class User(db.Model):
    isAdmin = db.Column(db.Boolean, nullable=False)
    createdAt = db.Column(db.DateTime, nullable=False, server_default=db.text("NOW()"))
    isActivate = db.Column(db.Boolean, default=True, server_default="True")
+
+   # builds = db.relationship('Build', backref='user')
+   # pc_builds = db.relationship('Build'),

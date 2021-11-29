@@ -36,13 +36,6 @@ class AuthAPI(MethodView):
             output.append(user_data)
         # print(output)
         return make_response(jsonify({'users': output}), 201)
-    
-    # # POST /users?s=search_String&type=jkjk
-    # request.args
-    #  {
-    #      s: search_string,
-    #      type: jkjk
-    #  }
 
     def post(self):
         data = request.get_json()
@@ -70,62 +63,87 @@ class AuthAPI(MethodView):
 
         return jsonify({ 'message': 'New user created!' })
 
+# ==============================Update User API==============================
+class UpdateAPI(MethodView):
     @token_required
-    def put(self):
-        data = request.get_json()
-        current_user = request.user
+    def put(self, id):
+        try:
+            data = request.get_json()
+            current_user = request.user
+            print(current_user)
+            if current_user.isAdmin is not True:
+                return jsonify({ 'message' : 'Cannot perform that function!' })
 
-        # if current_user.isAdmin is not True:
-        #     return jsonify({ 'message' : 'Cannot perform that function!' })
+            update_user = User\
+                .query\
+                .get(id)
 
-        update_user = User.query.filter_by(id = current_user.id).update()
-        
-    def delete(self):
-        pass
-# ============================================================================
+            username = data['username']
+            isAdmin = data['isAdmin']
+            isActivate = data['isActivate']  
+
+            update_user.username = username
+            update_user.isAdmin = isAdmin
+            update_user.isActivate = isActivate
+
+            db.session.commit()
+            return jsonify({ 'message': 'Updated successfully!' })
+        except Exception as err:
+            print("================")
+            print(err)
+            return jsonify({ 'message': 'Update fail!' })
+
+# ==============================Login API==============================
 class LoginAPI(MethodView):
     # @isAuthenticated
     def post(self):
-        auth = request.get_json()
-        print(auth)
-        if not auth or not auth['username'] or not auth['password']:
-            # returns 401 if any email or / and password is missing
-            return make_response(
-                'Could not verify 1',
-                401,
-                {'WWW-Authenticate' : 'Basic realm ="Login required !!"'}
-            )
+        try:
+            auth = request.get_json()
+            print(auth)
+            if not auth or not auth['username'] or not auth['password']:
+                # returns 401 if any email or / and password is missing
+                return make_response(
+                    'Could not verify 1',
+                    401,
+                    {'WWW-Authenticate' : 'Basic realm ="Login required !!"'}
+                )
 
-        user = User.query\
-            .filter_by(username = auth['username'])\
-            .first()
-        print(user)
+            user = User.query\
+                .filter_by(username = auth['username'])\
+                .first()
+            print(user)
 
-        if not user:
-            # returns 401 if user does not exist
-            return make_response(
-                'Could not verify',
-                401,
-                {'WWW-Authenticate' : 'Basic realm ="User does not exist !!"'}
-            )
-        if check_password_hash(user.password, auth['password']):
-            # generates the JWT Token
-            token = jwt.encode({
-                'id': user.id,
-                'exp' : datetime.utcnow() + timedelta(minutes = 45)
-            }, os.environ.get("JWT_SECRET_KEY"), "HS256")
-            return jsonify({'token' : token})
-        return make_response('Could not verify',  401, {'Basic realm' : 'login required'})
-
+            if not user:
+                # returns 401 if user does not exist
+                return make_response(
+                    'Could not verify',
+                    401,
+                    {'WWW-Authenticate' : 'Basic realm ="User does not exist !!"'}
+                )
+            if check_password_hash(user.password, auth['password']):
+                # generates the JWT Token
+                token = jwt.encode({
+                    'id': user.id,
+                    'exp' : datetime.utcnow() + timedelta(minutes = 45)
+                }, os.environ.get("JWT_SECRET_KEY"), "HS256")
+                return jsonify({'token' : token})
+            return make_response('Could not verify',  401, {'Basic realm' : 'login required'})
+        except Exception as err:
+            print(err)
+            return jsonify({ 'message': 'Login fail!' })
 
 auth_view = AuthAPI.as_view("auth_api")
 login_view = LoginAPI.as_view("login_api")
+update_view = UpdateAPI.as_view("update_api")
 
 auth_bp.add_url_rule(
     "/api/auth", view_func = auth_view, methods=["POST", "GET"]
 )
 auth_bp.add_url_rule(
     "/api/auth/login", view_func = login_view, methods=["POST"]
+)
+auth_bp.add_url_rule(
+    "/api/auth/<int:id>", view_func = update_view, methods=["PUT"]
 )
 
 # Node: middleware
