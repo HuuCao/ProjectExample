@@ -17,26 +17,18 @@ class PartAPI(MethodView):
         print(current_user.isAdmin)
         if current_user.isAdmin is not True:
             return jsonify({ 'message' : 'Cannot perform that function!' })
-        type = request.args.get('type')
+            
+        part_type = request.args.get('type')
         name = request.args.get('name')
-        search = "%{}%".format(name)
-        # print("------------------")
-        # print(search)
-        if type is not None:
-            parts = Part.query.filter(Part.isActivate==True, Part.type == type).all()
+        search = "%{}%".format(name or '')
+        
+        if part_type is not None:
+            parts = Part.query.filter(Part.isActivate.is_(True), Part.type.ilike(part_type), Part.name.ilike(search)).all()
         else:
-            pass
-        if search is not None:
-            parts = Part.query.filter(Part.isActivate==True, Part.name.like(search)).all()
-        else:
-            pass
-        # if type is not None and search is not None:
-        #     parts = Part.query.filter(Part.isActivate==True, Part.type == type, Part.name.like(search)).all()
-        if type is None and search is None:
-            parts = Part.query.filter(Part.isActivate==True).all()
-        else:
-            pass
+            parts = Part.query.filter(Part.isActivate.is_(True), Part.name.ilike(search)).all()
+       
         output = []
+        print(parts)
         for part in parts:
             part_data = {}
             part_data['id'] = part.id
@@ -47,7 +39,7 @@ class PartAPI(MethodView):
             part_data['isActivate'] = part.isActivate
             output.append(part_data)
         # print(output)
-        return make_response(jsonify({'parts': output}), 201)
+        return make_response(jsonify({'parts': output}), 200)
         
     @token_required
     def post (self):

@@ -1,12 +1,11 @@
+import traceback
+
 from flask import Blueprint, request, jsonify, make_response, current_app
 from datetime import datetime, timedelta
 
 from flask.views import MethodView
 
-from models.Part import Part
-
-from ..models import Part_Build
-from ..models import Build
+from ..models import Part_Build, Build, Part
 from ..models.base import db
 from ..decorator.jwt import token_required
 
@@ -21,25 +20,33 @@ class BuildAPI(MethodView):
             data = request.get_json()
 
             data_name = data['name']
-            parts = Build.parts
-            print(parts)
-
             if not data_name:
                 return jsonify({ 'message': 'Missing Name!' }), 400
 
+            including_parts = Part.query.filter(Part.id.in_(data['parts'])).all()
+            
+            new_build = Build(name=data_name, price=0)
+            for part in including_parts:
+                new_build.price += part.price
+                new_build.parts.append(part)
+            
+            new_build.idUser = request.user.id
 
-            # new_build = Build(
-            #     name = data_name,
-            #     isActivate = True
-            # )
-            # print (new_build)
+            build.parts
+            
             # db.session.add(new_build)
-            # db.session.commit()
+            # db.session.flush()
 
+            # for part in including_parts:
+            #     new_part_build = Part_Build(idBuild=new_build.id, idPart=part.id)
+            #     db.session.add(new_part_build)
+            
+            db.session.commit()
 
             return jsonify({ 'message': 'Part created successfully!' }), 201
 
         except Exception as error:
+            traceback.print_exc()
             print(error)
             return jsonify({ 'message': 'Create Fail!' }), 500
 

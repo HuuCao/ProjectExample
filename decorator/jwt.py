@@ -1,4 +1,5 @@
 import os
+import traceback
 
 from flask import Flask, request, jsonify, make_response
 from flask_sqlalchemy import SQLAlchemy
@@ -31,6 +32,7 @@ def token_required(f):
             return f(*args, **kwargs)
         except Exception as error:
             print(error)
+            traceback.print_exc()
             return jsonify({
                 'message' : 'Token is invalid !!'
             }), 401
