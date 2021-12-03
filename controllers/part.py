@@ -141,15 +141,23 @@ class UpdateAPI(MethodView):
             update_part = Part\
                 .query\
                 .get(id)
-
+            data_price = update_part.price
+            print(data_price)
             if data['type'] not in ['cpu', 'ram', 'gpu', 'storage', 'psu', 'case']:
                 return jsonify({ 'message': 'Invalid type!' })  
 
             name = data['name']
             type = data['type']
             price = data['price']
-            isActivate = data['isActivate']  
+            isActivate = data['isActivate']
 
+            # check_price = Part.query.filter_by(price = price).first()
+            if price != update_part.price:
+                all_builds = update_part.builds
+                changed_price = price - update_part.price
+                for build in all_builds:
+                    build.price = build.price + changed_price
+                
             update_part.name = name
             update_part.type = type
             update_part.price = price
