@@ -68,18 +68,29 @@ class BuildAPI(MethodView):
         for build in builds:
             build_data = {}
             build_parts = build.parts
-            build_parts_for_response = []
 
+            build_parts_for_response = []
             for part in build_parts:
                 build_parts_for_response.append({
                     "id": part.id,
                     "name": part.name,
                     "price": part.price,
                 })
+
+            user_for_response = []
+            users_data = build.owner
+            user_for_response.append({
+                "id": users_data.id,
+                "username": users_data.username,
+                "password": users_data.password,
+                "isAdmin": users_data.isAdmin,
+                "createdAt": users_data.createdAt,
+                "isActivate": users_data.isActivate,
+            })
             build_data['id'] = build.id
             build_data['name'] = build.name
             build_data['price'] = build.price
-            # build_data['user'] = build.owner
+            build_data['user'] = user_for_response
             build_data['parts'] = build_parts_for_response
             build_data['createdAt'] = build.createdAt
             build_data['isActivate'] = build.isActivate
@@ -104,23 +115,21 @@ class GetBuildByIdAPI(MethodView):
                 "name": part.name,
                 "price": part.price,
             })
-
         user_for_response = []
-        users = build.owner
-        for user in users:
-            user_for_response.append({
-                "id": user.id,
-                "username": user.username,
-                "password": user.password,
-                "isAdmin": user.isAdmin,
-                "createdAt": user.createdAt,
-                "isActivate": user.isActivate,
-            })
+        users_data = build.owner
+        user_for_response.append({
+            "id": users_data.id,
+            "username": users_data.username,
+            "password": users_data.password,
+            "isAdmin": users_data.isAdmin,
+            "createdAt": users_data.createdAt,
+            "isActivate": users_data.isActivate,
+        })
         build_data = {}
         build_data['id'] = build.id
         build_data['name'] = build.name
         build_data['parts'] = build_parts_for_response
-        build_data['parts'] = user_for_response
+        build_data['user'] = user_for_response
         build_data['price'] = build.price
         build_data['createdAt'] = build.createdAt
         build_data['isActivate'] = build.isActivate

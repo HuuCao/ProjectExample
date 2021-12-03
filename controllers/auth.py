@@ -16,7 +16,9 @@ from ..decorator.jwt import token_required
 auth_bp = Blueprint("auth_bp", __name__)
 
 class AuthAPI(MethodView):
-    # @isAuthenticated
+
+## ====================================== Get All User API ====================================== ##
+
     @token_required
     def get(self):
         current_user = request.user
@@ -36,7 +38,7 @@ class AuthAPI(MethodView):
             output.append(user_data)
         # print(output)
         return make_response(jsonify({'users': output}), 201)
-
+## ====================================== Create User API ====================================== ##
     def post(self):
         data = request.get_json()
 
@@ -63,7 +65,8 @@ class AuthAPI(MethodView):
 
         return jsonify({ 'message': 'New user created!' })
 
-# ==============================Update User API==============================
+## ====================================== Update User API ====================================== ##
+
 class UpdateAPI(MethodView):
     @token_required
     def put(self, id):
@@ -93,7 +96,7 @@ class UpdateAPI(MethodView):
             print(err)
             return jsonify({ 'message': 'Update fail!' })
 
-# ==============================Login API==============================
+## ====================================== Login API ====================================== ##
 class LoginAPI(MethodView):
     # @isAuthenticated
     def post(self):
@@ -132,9 +135,32 @@ class LoginAPI(MethodView):
             print(err)
             return jsonify({ 'message': 'Login fail!' })
 
+class DeleteAPI(MethodView):
+    @token_required
+    def delete(self, id):
+        try:
+            current_user = request.user
+            print(current_user)
+            if current_user.isAdmin is not True:
+                return jsonify({ 'message' : 'You are not an admin. Not allowed to create Part!' }), 400
+
+            delete_user = User\
+                .query\
+                .get(id)
+            
+            db.session.delete(delete_user)
+            db.session.commit()
+
+            return jsonify({ 'message': 'User deleted successfully!' }), 201
+
+        except Exception as error:
+            print(error)
+            return jsonify({ 'message': 'Delete Fail!' }), 500
+
 auth_view = AuthAPI.as_view("auth_api")
 login_view = LoginAPI.as_view("login_api")
 update_view = UpdateAPI.as_view("update_api")
+delete_view = DeleteAPI.as_view("delete_api")
 
 auth_bp.add_url_rule(
     "/api/auth", view_func = auth_view, methods=["POST", "GET"]
@@ -145,6 +171,8 @@ auth_bp.add_url_rule(
 auth_bp.add_url_rule(
     "/api/auth/<int:id>", view_func = update_view, methods=["PUT"]
 )
-
+auth_bp.add_url_rule(
+    "/api/auth/<int:id>", view_func = delete_view, methods=["DELETE"]
+)
 # Node: middleware
 # python: decorator
